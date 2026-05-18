@@ -1,5 +1,5 @@
 import json
-import live_parser
+from src import live_parser
 
 def test_parser():
     count = 0

@@ -32,6 +32,19 @@ class BotMainWindow(QMainWindow):
         self.stop_btn.setStyleSheet("background-color: red; color: white;")
         left_layout.addWidget(self.stop_btn)
 
+        left_layout.addSpacing(20)
+        left_layout.addWidget(QLabel("<b>Route Controls</b>"))
+
+        self.record_btn = QPushButton("RECORD ROUTE")
+        self.record_btn.setCheckable(True)
+        left_layout.addWidget(self.record_btn)
+
+        self.save_route_btn = QPushButton("SAVE ROUTE")
+        left_layout.addWidget(self.save_route_btn)
+
+        self.load_route_btn = QPushButton("LOAD ROUTE")
+        left_layout.addWidget(self.load_route_btn)
+
         left_layout.addStretch()
 
         # Center - Radar (Placeholder)

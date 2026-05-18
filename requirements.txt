@@ -1,0 +1,5 @@
+scapy
+PySide6
+opencv-python
+pytesseract
+pyinstaller
