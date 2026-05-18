@@ -114,18 +114,35 @@ def find_strings(data):
 def parse_player_pos(pkt):
     global _dirty
     now   = time.time()
-    vals  = [(p, v) for p, v in all_markers(pkt) if valid(v)]
-    if len(vals) >= 3:
-        state["player"].update({"x": round(vals[0][1], 2),
-                                "y": round(vals[1][1], 2),
-                                "z": round(vals[2][1], 2),
-                                "ts": now})
+
+    pos = pkt.find(MARKER)
+    if pos == -1: return
+
+    # Position
+    try:
+        x = struct.unpack_from("<f", pkt, pos + 5)[0]
+        y = struct.unpack_from("<f", pkt, pos + 14)[0]
+        z = struct.unpack_from("<f", pkt, pos + 23)[0]
+
+        state["player"].update({
+            "x": round(x, 2),
+            "y": round(y, 2),
+            "z": round(z, 2),
+            "ts": now
+        })
         _dirty = True
-    # rotation — радианы -π..π, не ноль
-    for _, v in all_markers(pkt):
-        if 0.001 < abs(v) < 3.2:
-            state["player"]["rot"] = round(v, 5)
-            break
+    except:
+        pass
+
+    # Rotation
+    try:
+        if pos + 61 <= len(pkt):
+            yaw_raw = struct.unpack_from("<H", pkt, pos + 59)[0]
+            yaw = (yaw_raw / 65535.0) * 360.0
+            state["player"]["rot"] = round(yaw, 2)
+            _dirty = True
+    except:
+        pass
 
 def parse_entity_pos(pkt):
     global _dirty

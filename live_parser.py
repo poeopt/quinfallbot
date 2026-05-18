@@ -99,6 +99,8 @@ def distance(a, b):
 # MAIN PARSER
 # =========================================
 
+MARKER = bytes.fromhex("0204000000")
+
 def handle(payload: bytes):
 
     global last_write
@@ -110,25 +112,30 @@ def handle(payload: bytes):
     # MOVEMENT PACKET FILTER
     # =========================================
 
-    if len(payload) != 274:
+    if len(payload) < 13:
         return {}
 
-    if payload[:4].hex() != "0e010000":
+    msg_type = read_u32(payload, 9)
+    if msg_type != 200:
+        return {}
+
+    pos = payload.find(MARKER)
+    if pos == -1:
         return {}
 
     # =========================================
     # ENTITY
     # =========================================
 
-    entity_id = read_u32(payload, 52)
+    entity_id = read_u32(payload, pos + 26)
 
     # =========================================
     # POSITION
     # =========================================
 
-    x = read_float(payload, 31)
-    y = read_float(payload, 40)
-    z = read_float(payload, 49)
+    x = read_float(payload, pos + 5)
+    y = read_float(payload, pos + 14)
+    z = read_float(payload, pos + 23)
 
     position = (x, y, z)
 
@@ -136,9 +143,9 @@ def handle(payload: bytes):
     # ROTATION
     # =========================================
 
-    yaw_raw = read_u16(payload, 85)
+    yaw_raw = read_u16(payload, pos + 59)
 
-    pitch_raw = read_i16(payload, 94)
+    pitch_raw = read_i16(payload, pos + 68)
 
     yaw = yaw_to_degrees(yaw_raw)
 
