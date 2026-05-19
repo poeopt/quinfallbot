@@ -1,16 +1,30 @@
 import struct
-from scapy.all import sniff, TCP, Raw, IP
+from scapy.all import sniff, TCP, Raw, IP, conf
 import threading
 import time
+import traceback
 from src import config
 
 class QuinfallSniffer:
     TAG = bytes([0x01, 0x04, 0x00, 0x00, 0x00])
 
-    def __init__(self, callback):
+    def __init__(self, callback, log_callback=None):
         self.callback = callback
+        self.log_callback = log_callback
         self.sessions = {} # (ip_src, port_src, ip_dst, port_dst) -> {"buf": b"", "last_ts": float}
         self.running = False
+
+    def _log(self, message):
+        if self.log_callback:
+            self.log_callback(message)
+        print(f"[Sniffer] {message}")
+
+    @staticmethod
+    def list_interfaces():
+        try:
+            return [str(iface) for iface in conf.ifaces.values()]
+        except Exception as e:
+            return [f"Error listing interfaces: {e}"]
 
     def handle_packet(self, pkt):
         if not pkt.haslayer(TCP) or not pkt.haslayer(Raw):
@@ -75,8 +89,14 @@ class QuinfallSniffer:
             filter_str = f"tcp port {config.GAME_SERVER_PORT}"
 
         self.running = True
-        print(f"Starting Quinfall internal sniffer on {iface if iface else 'all interfaces'} with filter '{filter_str}'...")
-        sniff(iface=iface, filter=filter_str, prn=self.handle_packet, store=0, stop_filter=lambda x: not self.running)
+        self._log(f"Starting Quinfall internal sniffer on {iface if iface else 'all interfaces'} with filter '{filter_str}'...")
+
+        try:
+            sniff(iface=iface, filter=filter_str, prn=self.handle_packet, store=0, stop_filter=lambda x: not self.running)
+        except Exception as e:
+            self.running = False
+            err_msg = f"Sniffer error: {e}\n{traceback.format_exc()}"
+            self._log(err_msg)
 
     def stop(self):
         self.running = False

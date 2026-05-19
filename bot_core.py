@@ -18,13 +18,14 @@ class BotCore:
 
         self.player_pos = {"x": 0, "y": 0, "z": 0, "rot": 0, "id": 0}
 
-        self.sniffer = QuinfallSniffer(self.packet_callback)
-        self.sniffer_thread = None
-
         self.app = QApplication(sys.argv)
         self.window = BotMainWindow()
 
+        self.sniffer = QuinfallSniffer(self.packet_callback, log_callback=self.window.log)
+        self.sniffer_thread = None
+
         # Connect buttons
+        self.window.refresh_iface_btn.clicked.connect(self.refresh_interfaces)
         self.window.start_btn.clicked.connect(self.start_bot)
         self.window.stop_btn.clicked.connect(self.stop_bot)
         self.window.record_btn.toggled.connect(self.toggle_record)
@@ -35,6 +36,14 @@ class BotCore:
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_ui)
         self.timer.start(100) # 10Hz
+
+        self.refresh_interfaces()
+
+    def refresh_interfaces(self):
+        self.window.iface_combo.clear()
+        ifaces = QuinfallSniffer.list_interfaces()
+        self.window.iface_combo.addItems(ifaces)
+        self.window.log(f"Found {len(ifaces)} network interfaces.")
 
     def packet_callback(self, data):
         # Update player pos using live_parser
@@ -58,8 +67,17 @@ class BotCore:
         self.resource_tracker.process_packet(data)
 
     def start_bot(self):
+        selected_iface = self.window.iface_combo.currentText()
+        if not selected_iface:
+            self.window.log("Error: No interface selected.")
+            return
+
         if self.sniffer_thread is None or not self.sniffer_thread.is_alive():
-            self.sniffer_thread = threading.Thread(target=self.sniffer.start, daemon=True)
+            self.sniffer_thread = threading.Thread(
+                target=self.sniffer.start,
+                kwargs={"iface": selected_iface},
+                daemon=True
+            )
             self.sniffer_thread.start()
         self.window.status_label.setText("Running")
         self.window.log("Bot started.")

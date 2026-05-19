@@ -1,6 +1,6 @@
 import sys
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
-                             QHBoxLayout, QLabel, QPushButton, QTextEdit, QListWidget)
+                             QHBoxLayout, QLabel, QPushButton, QTextEdit, QListWidget, QComboBox)
 from PySide6.QtCore import Qt, QTimer
 
 class BotMainWindow(QMainWindow):
@@ -16,6 +16,15 @@ class BotMainWindow(QMainWindow):
         # Left side - Status and Controls
         left_layout = QVBoxLayout()
         main_layout.addLayout(left_layout, 1)
+
+        left_layout.addWidget(QLabel("<b>Network Interface</b>"))
+        iface_layout = QHBoxLayout()
+        self.iface_combo = QComboBox()
+        iface_layout.addWidget(self.iface_combo)
+        self.refresh_iface_btn = QPushButton("↺")
+        self.refresh_iface_btn.setFixedWidth(30)
+        iface_layout.addWidget(self.refresh_iface_btn)
+        left_layout.addLayout(iface_layout)
 
         left_layout.addWidget(QLabel("<b>Bot Status</b>"))
         self.status_label = QLabel("Idle")
