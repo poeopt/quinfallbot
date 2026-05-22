@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+player_live.txt
+entity_debug.txt
+rot_live.txt
+reset.txt
+live_packets.jsonl
+packet_session.json
